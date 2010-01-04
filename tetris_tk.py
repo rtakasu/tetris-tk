@@ -9,12 +9,13 @@ Controls:
     Up Arrow        Drop Tetronimoe to the bottom
     'a'             Rotate anti-clockwise (to the left)
     'b'             Rotate clockwise (to the right)
+    'p'             Pause the game.
 """
 
 from Tkinter import *
 from time import sleep
 from random import randint
-from tkMessageBox import showwarning
+import tkMessageBox
 import sys
 
 SCALE = 20
@@ -64,7 +65,7 @@ class Board( Frame ):
     """
     def __init__(self, parent, scale=20, max_x=10, max_y=20, offset=3):
         """
-        Init and config the testris board, default configuration:
+        Init and config the tetris board, default configuration:
         Scale (block size in pixels) = 20
         max X (in blocks) = 10
         max Y (in blocks) = 20
@@ -434,11 +435,12 @@ class game_controller(object):
         self.parent.bind("<Down>", self.down_callback)
         self.parent.bind("a", self.a_callback)
         self.parent.bind("s", self.s_callback)
+        self.parent.bind("p", self.p_callback)
         
         self.shape = self.get_next_shape()
         #self.board.output()
 
-        self.parent.after( self.delay, self.move_my_shape )
+        self.after_id = self.parent.after( self.delay, self.move_my_shape )
         
     def handle_move(self, direction):
         #if you can't move then you've hit something
@@ -456,7 +458,7 @@ class game_controller(object):
                 # that the check before creating it failed and the
                 # game is over!
                 if self.shape is None:
-                    showwarning(
+                    tkMessageBox.showwarning(
                         title="GAME OVER",
                         message ="Score: %7d\tLevel: %d\t" % (
                             self.score, self.level),
@@ -505,11 +507,19 @@ class game_controller(object):
     def s_callback( self, event):
         if self.shape:
             self.shape.rotate(clockwise=False)
+        
+    def p_callback(self, event):
+        self.parent.after_cancel( self.after_id )
+        tkMessageBox.askquestion(
+            title = "Paused!",
+            message="Continue?",
+            type=tkMessageBox.OK)
+        self.after_id = self.parent.after( self.delay, self.move_my_shape )
     
     def move_my_shape( self ):
         if self.shape:
             self.handle_move( DOWN )
-            self.parent.after( self.delay, self.move_my_shape )
+            self.after_id = self.parent.after( self.delay, self.move_my_shape )
         
     def get_next_shape( self ):
         """
